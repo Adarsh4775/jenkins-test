@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'adarsh7890/jenkins-test'
         DOCKER_TAG = 'latest'
+        EC2_IP = '34.236.150.79'
     }
 
     stages {
@@ -45,9 +46,24 @@ pipeline {
             }
         }
 
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(['ec2-ssh-key']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@34.236.150.79 "
+                        docker pull adarsh7890/jenkins-test:latest &&
+                        docker stop myapp || true &&
+                        docker rm myapp || true &&
+                        docker run -d -p 5000:5000 --name myapp adarsh7890/jenkins-test:latest
+                        "
+                    '''
+                }
+            }
+        }
+
         stage('Done') {
             steps {
-                echo 'Image pushed to Docker Hub! 🎉'
+                echo 'App deployed to EC2! 🎉'
             }
         }
     }
